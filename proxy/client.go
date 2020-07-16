@@ -14,14 +14,16 @@ import (
 // NewABCIClient returns newly connected client
 type ClientCreator interface {
 	NewABCIClient() (abcicli.Client, error)
+	WithMetrics(*abcicli.Metrics) ClientCreator
 }
 
 //----------------------------------------------------
 // local proxy uses a mutex on an in-proc app
 
 type localClientCreator struct {
-	mtx *sync.Mutex
-	app types.Application
+	mtx     *sync.Mutex
+	app     types.Application
+	metrics *abcicli.Metrics
 }
 
 func NewLocalClientCreator(app types.Application) ClientCreator {
@@ -31,8 +33,17 @@ func NewLocalClientCreator(app types.Application) ClientCreator {
 	}
 }
 
+func (l *localClientCreator) WithMetrics(metrics *abcicli.Metrics) ClientCreator {
+	l.metrics = metrics
+	return l
+}
+
 func (l *localClientCreator) NewABCIClient() (abcicli.Client, error) {
-	return abcicli.NewLocalClient(l.mtx, l.app), nil
+	client := abcicli.NewLocalClient(l.mtx, l.app)
+	if l.metrics != nil {
+		client = client.WithMetrics(l.metrics)
+	}
+	return client, nil
 }
 
 //---------------------------------------------------------------
@@ -50,6 +61,10 @@ func NewRemoteClientCreator(addr, transport string, mustConnect bool) ClientCrea
 		transport:   transport,
 		mustConnect: mustConnect,
 	}
+}
+
+func (r *remoteClientCreator) WithMetrics(_ *abcicli.Metrics) ClientCreator {
+	return r
 }
 
 func (r *remoteClientCreator) NewABCIClient() (abcicli.Client, error) {
