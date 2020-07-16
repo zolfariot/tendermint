@@ -18,6 +18,7 @@ import (
 	amino "github.com/tendermint/go-amino"
 	dbm "github.com/tendermint/tm-db"
 
+	abcicli "github.com/tendermint/tendermint/abci/client"
 	abci "github.com/tendermint/tendermint/abci/types"
 	bcv0 "github.com/tendermint/tendermint/blockchain/v0"
 	bcv1 "github.com/tendermint/tendermint/blockchain/v1"
@@ -104,19 +105,20 @@ func DefaultNewNode(config *cfg.Config, logger log.Logger) (*Node, error) {
 }
 
 // MetricsProvider returns a consensus, p2p and mempool Metrics.
-type MetricsProvider func(chainID string) (*cs.Metrics, *p2p.Metrics, *mempl.Metrics, *sm.Metrics)
+type MetricsProvider func(chainID string) (*cs.Metrics, *p2p.Metrics, *mempl.Metrics, *sm.Metrics, *abcicli.Metrics)
 
 // DefaultMetricsProvider returns Metrics build using Prometheus client library
 // if Prometheus is enabled. Otherwise, it returns no-op Metrics.
 func DefaultMetricsProvider(config *cfg.InstrumentationConfig) MetricsProvider {
-	return func(chainID string) (*cs.Metrics, *p2p.Metrics, *mempl.Metrics, *sm.Metrics) {
+	return func(chainID string) (*cs.Metrics, *p2p.Metrics, *mempl.Metrics, *sm.Metrics, *abcicli.Metrics) {
 		if config.Prometheus {
 			return cs.PrometheusMetrics(config.Namespace, "chain_id", chainID),
 				p2p.PrometheusMetrics(config.Namespace, "chain_id", chainID),
 				mempl.PrometheusMetrics(config.Namespace, "chain_id", chainID),
-				sm.PrometheusMetrics(config.Namespace, "chain_id", chainID)
+				sm.PrometheusMetrics(config.Namespace, "chain_id", chainID),
+				abcicli.PrometheusMetrics(config.Namespace, "chain_id", chainID)
 		}
-		return cs.NopMetrics(), p2p.NopMetrics(), mempl.NopMetrics(), sm.NopMetrics()
+		return cs.NopMetrics(), p2p.NopMetrics(), mempl.NopMetrics(), sm.NopMetrics(), abcicli.NopMetrics()
 	}
 }
 
@@ -560,6 +562,10 @@ func NewNode(config *cfg.Config,
 		return nil, err
 	}
 
+	csMetrics, p2pMetrics, memplMetrics, smMetrics, cMetrics := metricsProvider(genDoc.ChainID)
+
+	clientCreator = clientCreator.WithMetrics(cMetrics)
+
 	// Create the proxyApp and establish connections to the ABCI app (consensus, mempool, query).
 	proxyApp, err := createAndStartProxyAppConns(clientCreator, logger)
 	if err != nil {
@@ -613,8 +619,6 @@ func NewNode(config *cfg.Config,
 	// Decide whether to fast-sync or not
 	// We don't fast-sync when the only validator is us.
 	fastSync := config.FastSyncMode && !onlyValidatorIsUs(state, pubKey)
-
-	csMetrics, p2pMetrics, memplMetrics, smMetrics := metricsProvider(genDoc.ChainID)
 
 	// Make MempoolReactor
 	mempoolReactor, mempool := createMempoolAndMempoolReactor(config, proxyApp, state, memplMetrics, logger)

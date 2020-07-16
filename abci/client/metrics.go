@@ -16,10 +16,29 @@ type Metrics struct {
 }
 
 func PrometheusMetrics(namespace string, labels ...string) *Metrics {
+	buckets := prometheus.ExponentialBuckets(1, 5, 10)
 	return &Metrics{
-		LockWaitDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{}, labels),
-		UnlockedDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{}, labels),
-		TotalDuration:    prometheus.NewHistogramVec(prometheus.HistogramOpts{}, labels),
+		LockWaitDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: metricsSubsystem,
+			Name:      "lock_wait_duration",
+			Help:      "time spent waiting for lock",
+			Buckets:   buckets,
+		}, labels),
+		UnlockedDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: metricsSubsystem,
+			Name:      "unlocked_duration",
+			Help:      "execution time sans lock wait",
+			Buckets:   buckets,
+		}, labels),
+		TotalDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: metricsSubsystem,
+			Name:      "total_duration",
+			Help:      "total execution time",
+			Buckets:   buckets,
+		}, labels),
 	}
 }
 
