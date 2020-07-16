@@ -25,6 +25,11 @@ type Metrics struct {
 	PeerPendingSendBytes metrics.Gauge
 	// Number of transactions submitted by each peer.
 	NumTxs metrics.Gauge
+
+	ReactorReceiveDuration           metrics.Histogram
+	ReactorConsensusReceiveDuration  metrics.Histogram
+	ReactorBlockchainReceiveDuration metrics.Histogram
+	ReactorMempoolReceiveDuration    metrics.Histogram
 }
 
 // PrometheusMetrics returns Metrics build using Prometheus client library.
@@ -66,16 +71,48 @@ func PrometheusMetrics(namespace string, labelsAndValues ...string) *Metrics {
 			Name:      "num_txs",
 			Help:      "Number of transactions submitted by each peer.",
 		}, append(labels, "peer_id")).With(labelsAndValues...),
+		ReactorReceiveDuration: prometheus.NewHistogramFrom(stdprometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: MetricsSubsystem,
+			Name:      "reactor_receive_duration",
+			Help:      "duration of execution of reactor.accept",
+			Buckets:   stdprometheus.ExponentialBuckets(1, 5, 7),
+		}, labels).With(labelsAndValues...),
+		ReactorConsensusReceiveDuration: prometheus.NewHistogramFrom(stdprometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: MetricsSubsystem,
+			Name:      "reactor_consensus_receive_duration",
+			Help:      "duration of execution of reactor.accept",
+			Buckets:   stdprometheus.ExponentialBuckets(1, 5, 7),
+		}, labels).With(labelsAndValues...),
+		ReactorBlockchainReceiveDuration: prometheus.NewHistogramFrom(stdprometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: MetricsSubsystem,
+			Name:      "reactor_blockchain_receive_duration",
+			Help:      "duration of execution of reactor.accept",
+			Buckets:   stdprometheus.ExponentialBuckets(1, 5, 7),
+		}, labels).With(labelsAndValues...),
+		ReactorMempoolReceiveDuration: prometheus.NewHistogramFrom(stdprometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: MetricsSubsystem,
+			Name:      "reactor_mempool_receive_duration",
+			Help:      "duration of execution of reactor.accept",
+			Buckets:   stdprometheus.ExponentialBuckets(1, 5, 7),
+		}, labels).With(labelsAndValues...),
 	}
 }
 
 // NopMetrics returns no-op Metrics.
 func NopMetrics() *Metrics {
 	return &Metrics{
-		Peers:                 discard.NewGauge(),
-		PeerReceiveBytesTotal: discard.NewCounter(),
-		PeerSendBytesTotal:    discard.NewCounter(),
-		PeerPendingSendBytes:  discard.NewGauge(),
-		NumTxs:                discard.NewGauge(),
+		Peers:                            discard.NewGauge(),
+		PeerReceiveBytesTotal:            discard.NewCounter(),
+		PeerSendBytesTotal:               discard.NewCounter(),
+		PeerPendingSendBytes:             discard.NewGauge(),
+		NumTxs:                           discard.NewGauge(),
+		ReactorReceiveDuration:           discard.NewHistogram(),
+		ReactorConsensusReceiveDuration:  discard.NewHistogram(),
+		ReactorBlockchainReceiveDuration: discard.NewHistogram(),
+		ReactorMempoolReceiveDuration:    discard.NewHistogram(),
 	}
 }

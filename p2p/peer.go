@@ -383,7 +383,20 @@ func createMConnection(
 			"chID", fmt.Sprintf("%#x", chID),
 		}
 		p.metrics.PeerReceiveBytesTotal.With(labels...).Add(float64(len(msgBytes)))
+		begin := time.Now()
 		reactor.Receive(chID, p, msgBytes)
+		delta := float64(time.Now().Sub(begin) / time.Millisecond)
+		p.metrics.ReactorReceiveDuration.Observe(delta)
+
+		switch chID {
+		case byte(0x30):
+			p.metrics.ReactorMempoolReceiveDuration.Observe(delta)
+		case byte(0x40):
+			p.metrics.ReactorBlockchainReceiveDuration.Observe(delta)
+		case byte(0x20), byte(0x21), byte(0x22), byte(0x23):
+			p.metrics.ReactorConsensusReceiveDuration.Observe(delta)
+		}
+
 	}
 
 	onError := func(r interface{}) {

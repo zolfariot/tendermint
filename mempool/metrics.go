@@ -1,8 +1,6 @@
 package mempool
 
 import (
-	"time"
-
 	"github.com/go-kit/kit/metrics"
 	"github.com/go-kit/kit/metrics/discard"
 	"github.com/go-kit/kit/metrics/prometheus"
@@ -70,14 +68,14 @@ func PrometheusMetrics(namespace string, labelsAndValues ...string) *Metrics {
 			Subsystem: MetricsSubsystem,
 			Name:      "proxy_check_tx_duration",
 			Help:      "duration of proxy.CheckTxAsync. in CheckTx",
-			Buckets:   stdprometheus.ExponentialBuckets(float64(time.Millisecond), 5, 7),
+			Buckets:   stdprometheus.ExponentialBuckets(1, 5, 7),
 		}, labels).With(labelsAndValues...),
 		ProxyRecheckDuration: prometheus.NewHistogramFrom(stdprometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: MetricsSubsystem,
 			Name:      "proxy_recheck_duration",
 			Help:      "duration of proxy.CheckTxAsync. in recheckTx",
-			Buckets:   stdprometheus.ExponentialBuckets(float64(time.Millisecond), 5, 7),
+			Buckets:   stdprometheus.ExponentialBuckets(1, 5, 7),
 		}, labels).With(labelsAndValues...),
 	}
 }
