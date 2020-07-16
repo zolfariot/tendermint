@@ -76,28 +76,28 @@ func PrometheusMetrics(namespace string, labelsAndValues ...string) *Metrics {
 			Subsystem: MetricsSubsystem,
 			Name:      "reactor_receive_duration",
 			Help:      "duration of execution of reactor.accept",
-			Buckets:   stdprometheus.ExponentialBuckets(1, 5, 7),
+			Buckets:   stdprometheus.ExponentialBuckets(1, 5, 10),
 		}, labels).With(labelsAndValues...),
 		ReactorConsensusReceiveDuration: prometheus.NewHistogramFrom(stdprometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: MetricsSubsystem,
 			Name:      "reactor_consensus_receive_duration",
 			Help:      "duration of execution of reactor.accept",
-			Buckets:   stdprometheus.ExponentialBuckets(1, 5, 7),
+			Buckets:   stdprometheus.ExponentialBuckets(1, 5, 10),
 		}, labels).With(labelsAndValues...),
 		ReactorBlockchainReceiveDuration: prometheus.NewHistogramFrom(stdprometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: MetricsSubsystem,
 			Name:      "reactor_blockchain_receive_duration",
 			Help:      "duration of execution of reactor.accept",
-			Buckets:   stdprometheus.ExponentialBuckets(1, 5, 7),
+			Buckets:   stdprometheus.ExponentialBuckets(1, 5, 10),
 		}, labels).With(labelsAndValues...),
 		ReactorMempoolReceiveDuration: prometheus.NewHistogramFrom(stdprometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: MetricsSubsystem,
 			Name:      "reactor_mempool_receive_duration",
 			Help:      "duration of execution of reactor.accept",
-			Buckets:   stdprometheus.ExponentialBuckets(1, 5, 7),
+			Buckets:   stdprometheus.ExponentialBuckets(1, 5, 10),
 		}, labels).With(labelsAndValues...),
 	}
 }
