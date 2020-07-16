@@ -1,6 +1,8 @@
 package mempool
 
 import (
+	"time"
+
 	"github.com/go-kit/kit/metrics"
 	"github.com/go-kit/kit/metrics/discard"
 	"github.com/go-kit/kit/metrics/prometheus"
@@ -24,6 +26,9 @@ type Metrics struct {
 	FailedTxs metrics.Counter
 	// Number of times transactions are rechecked in the mempool.
 	RecheckTimes metrics.Counter
+
+	ProxyCheckTxDuration metrics.Histogram
+	ProxyRecheckDuration metrics.Histogram
 }
 
 // PrometheusMetrics returns Metrics build using Prometheus client library.
@@ -60,15 +65,31 @@ func PrometheusMetrics(namespace string, labelsAndValues ...string) *Metrics {
 			Name:      "recheck_times",
 			Help:      "Number of times transactions are rechecked in the mempool.",
 		}, labels).With(labelsAndValues...),
+		ProxyCheckTxDuration: prometheus.NewHistogramFrom(stdprometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: MetricsSubsystem,
+			Name:      "proxy_check_tx_duration",
+			Help:      "duration of proxy.CheckTxAsync. in CheckTx",
+			Buckets:   stdprometheus.ExponentialBuckets(float64(time.Millisecond), 5, 7),
+		}, labels).With(labelsAndValues...),
+		ProxyRecheckDuration: prometheus.NewHistogramFrom(stdprometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: MetricsSubsystem,
+			Name:      "proxy_recheck_duration",
+			Help:      "duration of proxy.CheckTxAsync. in recheckTx",
+			Buckets:   stdprometheus.ExponentialBuckets(float64(time.Millisecond), 5, 7),
+		}, labels).With(labelsAndValues...),
 	}
 }
 
 // NopMetrics returns no-op Metrics.
 func NopMetrics() *Metrics {
 	return &Metrics{
-		Size:         discard.NewGauge(),
-		TxSizeBytes:  discard.NewHistogram(),
-		FailedTxs:    discard.NewCounter(),
-		RecheckTimes: discard.NewCounter(),
+		Size:                 discard.NewGauge(),
+		TxSizeBytes:          discard.NewHistogram(),
+		FailedTxs:            discard.NewCounter(),
+		RecheckTimes:         discard.NewCounter(),
+		ProxyCheckTxDuration: discard.NewHistogram(),
+		ProxyRecheckDuration: discard.NewHistogram(),
 	}
 }
