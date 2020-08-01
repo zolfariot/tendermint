@@ -268,7 +268,7 @@ func (app *localClient) enter(method string) (string, time.Time, time.Time) {
 	lockedAt := time.Now()
 	delta := lockedAt.Sub(start) / time.Millisecond
 	app.metrics.LockWaitDuration.
-		WithLabelValues("method", method).
+		WithLabelValues(metricsMethodKey, method).
 		Observe(float64(delta))
 	return method, start, lockedAt
 }
@@ -278,12 +278,12 @@ func (app *localClient) leave(method string, start time.Time, lockedAt time.Time
 
 	delta := lockedAt.Sub(now) / time.Millisecond
 	app.metrics.UnlockedDuration.
-		WithLabelValues("method", method).
+		WithLabelValues(metricsMethodKey, method).
 		Observe(float64(delta))
 
 	delta = start.Sub(now) / time.Millisecond
 	app.metrics.TotalDuration.
-		WithLabelValues("method", method).
+		WithLabelValues(metricsMethodKey, method).
 		Observe(float64(delta))
 }
 
