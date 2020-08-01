@@ -16,30 +16,45 @@ type Metrics struct {
 }
 
 func PrometheusMetrics(namespace string, labels ...string) *Metrics {
-	buckets := prometheus.ExponentialBuckets(1, 5, 10)
-	return &Metrics{
-		LockWaitDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+	metrics := Metrics{}
+
+	{
+		coll := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: metricsSubsystem,
 			Name:      "lock_wait_duration",
 			Help:      "time spent waiting for lock",
-			Buckets:   buckets,
-		}, labels),
-		UnlockedDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Buckets:   prometheus.ExponentialBuckets(1, 5, 10),
+		}, labels)
+		prometheus.MustRegister(coll)
+		metrics.LockWaitDuration = coll
+	}
+
+	{
+		coll := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: metricsSubsystem,
 			Name:      "unlocked_duration",
 			Help:      "execution time sans lock wait",
-			Buckets:   buckets,
-		}, labels),
-		TotalDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Buckets:   prometheus.ExponentialBuckets(1, 5, 10),
+		}, labels)
+		prometheus.MustRegister(coll)
+		metrics.UnlockedDuration = coll
+	}
+
+	{
+		coll := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: metricsSubsystem,
 			Name:      "total_duration",
 			Help:      "total execution time",
-			Buckets:   buckets,
-		}, labels),
+			Buckets:   prometheus.ExponentialBuckets(1, 5, 10),
+		}, labels)
+		prometheus.MustRegister(coll)
+		metrics.TotalDuration = coll
 	}
+
+	return &metrics
 }
 
 func NopMetrics() *Metrics {
