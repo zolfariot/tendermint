@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"errors"
 
 	tmsync "github.com/tendermint/tendermint/libs/sync"
 	types "github.com/tendermint/tendermint/rpc/jsonrpc/types"
@@ -25,6 +26,10 @@ const (
 )
 
 //-------------------------------------------------------------
+
+var (
+	errRPCFailure = errors.New("RPC failed")
+)
 
 // Parsed URL structure
 type parsedURL struct {
@@ -222,6 +227,10 @@ func (c *Client) Call(
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
+	if httpResponse.StatusCode >= http.StatusInternalServerError {
+		return nil, fmt.Errorf("%w: remote server returned %d", errRPCFailure, httpResponse.StatusCode)
+	}
+
 	return unmarshalResponseBytes(responseBytes, id, result)
 }
 
@@ -268,6 +277,10 @@ func (c *Client) sendBatch(ctx context.Context, requests []*jsonRPCBufferedReque
 	responseBytes, err := ioutil.ReadAll(httpResponse.Body)
 	if err != nil {
 		return nil, fmt.Errorf("read response body: %w", err)
+	}
+
+	if httpResponse.StatusCode >= http.StatusInternalServerError {
+		return nil, fmt.Errorf("%w: remote server returned %d", errRPCFailure, httpResponse.StatusCode)
 	}
 
 	// collect ids to check responses IDs in unmarshalResponseBytesArray
