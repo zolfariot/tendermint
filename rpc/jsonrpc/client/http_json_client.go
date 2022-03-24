@@ -389,7 +389,7 @@ func makeHTTPDialer(remoteAddr string) (func(string, string) (net.Conn, error), 
 // remoteAddr should be fully featured (eg. with tcp:// or unix://).
 // An error will be returned in case of invalid remoteAddr.
 func DefaultHTTPClient(remoteAddr string) (*http.Client, error) {
-	dialFn, err := makeHTTPDialer(remoteAddr)
+	// dialFn, err := makeHTTPDialer(remoteAddr)
 	if err != nil {
 		return nil, err
 	}
